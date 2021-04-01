@@ -53,7 +53,7 @@ pub struct KafkaProducer {
 }
 
 /// The implementation for a kafka producer
-impl<'a> Producer<KafkaClient, KafkaConfig, kafka::Error> for KafkaProducer {
+impl Producer<KafkaClient, KafkaConfig, kafka::Error> for KafkaProducer {
   fn new(mut client: KafkaClient, configuration: KafkaConfig) -> Self {
     client.set_client_id(configuration.client_id.clone());
 
