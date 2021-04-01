@@ -1,17 +1,25 @@
+use std::sync::Arc;
+
 use diesel::{Connection, PgConnection};
 
 mod logger;
-mod schema;
 
 #[actix::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Setup general configration
     initialize()?;
 
-    let database_connection = establish_database_connection()?;
+    // Setup the database and indexer
+    let database_connection = Arc::new(establish_database_connection()?);
     let indexer = create_near_indexer();
     let block_stream = indexer.streamer();
     
-    actix::spawn(block_consumer(database_connection, block_stream)).await?;
+    // Spawn the block_consumer future
+    actix::spawn(block_consumer(database_connection, block_stream));
+
+    // Wait til a SIG-INT
+    tokio::signal::ctrl_c().await?;
+    log::info!("Shutting down nymdex...");
 
     Ok(())
 }
@@ -47,7 +55,7 @@ fn create_near_indexer() -> near_indexer::Indexer {
     near_indexer::Indexer::new(indexer_config)
 }
 
-async fn block_consumer(_database_connection: PgConnection, mut stream: tokio::sync::mpsc::Receiver<near_indexer::StreamerMessage>) {
+async fn block_consumer(_database_connection: Arc<PgConnection>, mut stream: tokio::sync::mpsc::Receiver<near_indexer::StreamerMessage>) {
     while let Some(streamer_message) = stream.recv().await {
         eprintln!("{}", serde_json::to_value(streamer_message).unwrap());
     }
