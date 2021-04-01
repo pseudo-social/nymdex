@@ -14,8 +14,13 @@ pub fn initialize() -> Result<(), Box<dyn std::error::Error>> {
 
 /// Create the NEAR indexer configuration
 pub fn configure_near_indexer(sync_mode: Option<near_indexer::SyncModeEnum>) -> near_indexer::IndexerConfig {
+  let near_config_path = match std::env::var("NEAR_CONFIG_PATH") {
+    Ok(path) => path,
+    Err(_) => near_indexer::get_default_home()
+  };
+
   near_indexer::IndexerConfig {
-      home_dir: std::path::PathBuf::from(near_indexer::get_default_home()),
+      home_dir: std::path::PathBuf::from(near_config_path),
       sync_mode: sync_mode.unwrap_or(near_indexer::SyncModeEnum::FromInterruption),
       await_for_node_synced: near_indexer::AwaitForNodeSyncedEnum::WaitForFullSync,
   }

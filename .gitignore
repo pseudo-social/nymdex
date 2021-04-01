@@ -7,3 +7,7 @@
 
 # Environment vars
 .env
+
+# IDEs
+.idea/
+.vscode/
