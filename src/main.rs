@@ -1,21 +1,28 @@
-use std::sync::Arc;
-
-use diesel::{Connection, PgConnection};
-
 mod logger;
+mod producer;
+
+use producer::{ProducerType};
 
 #[actix::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Setup general configration
     initialize()?;
 
-    // Setup the database and indexer
-    let database_connection = Arc::new(establish_database_connection()?);
+    // Setup the producer
+    let producer_type = get_producer_type()?;
+    if producer_type != ProducerType::Kafka {
+        log::error!("Only kafka is currently supported as a producer_type");
+    }
+
+
+
+    // Setup the indexer
     let indexer = create_near_indexer();
     let block_stream = indexer.streamer();
     
     // Spawn the block_consumer future
-    actix::spawn(block_consumer(database_connection, block_stream));
+    actix::spawn(block_consumer(block_stream));
+    // actix::spawn(block_producer(producer_type));
 
     // Wait til a SIG-INT
     tokio::signal::ctrl_c().await?;
@@ -29,13 +36,6 @@ fn initialize() -> Result<(), Box<dyn std::error::Error>> {
     logger::init(None);
 
     Ok(())
-}
-
-fn establish_database_connection() -> Result<PgConnection, Box<dyn std::error::Error>> {
-    let database_url = std::env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
-    Ok(PgConnection::establish(&database_url)
-        .expect(&format!("Failed to connect postgres at {}", database_url)))
 }
 
 fn configure_near_indexer(sync_mode: Option<near_indexer::SyncModeEnum>) -> near_indexer::IndexerConfig {
@@ -55,8 +55,20 @@ fn create_near_indexer() -> near_indexer::Indexer {
     near_indexer::Indexer::new(indexer_config)
 }
 
-async fn block_consumer(_database_connection: Arc<PgConnection>, mut stream: tokio::sync::mpsc::Receiver<near_indexer::StreamerMessage>) {
+async fn block_consumer(mut stream: tokio::sync::mpsc::Receiver<near_indexer::StreamerMessage>) {
     while let Some(streamer_message) = stream.recv().await {
         eprintln!("{}", serde_json::to_value(streamer_message).unwrap());
+    }
+}
+
+fn get_producer_type() -> Result<ProducerType, Box<dyn std::error::Error>> {
+    let value = std::env::var("PRODUCER_TYPE")?;
+
+    match value.as_str() {
+        "kafka" => Ok(ProducerType::Kafka),
+        "rabbitmq" => Ok(ProducerType::RabbitMQ),
+        "redis" => Ok(ProducerType::Redis),
+        "grpc" => Ok(ProducerType::GRPC),
+        _ => Err("Invalid producer type must be either: kafka, rabbitmq, redis, grpc".into())
     }
 }
