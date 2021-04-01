@@ -1,3 +1,5 @@
+//! Logger helpers
+
 /// Initialize our logger with default settings automatically
 pub fn init(level: Option<String>) {
   env_logger::init_from_env(

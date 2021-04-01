@@ -1,3 +1,7 @@
+//!
+//! Abstractions to keep the entrypoint KISS
+//!
+
 use crate::logger;
 
 /// Initialize logging and load environment variables
@@ -22,13 +26,13 @@ pub fn configure_near_indexer_default() -> near_indexer::IndexerConfig {
   configure_near_indexer(None)
 }
 
-/// Create the near indexer clients
+/// Create the NEAR indexer actors
 pub fn create_near_indexer() -> near_indexer::Indexer {
   let indexer_config = configure_near_indexer_default();
   near_indexer::Indexer::new(indexer_config)
 }
 
-// Handle the incoming blocks from the Receiver
+/// Handle the incoming blocks from the tokio::sync::mpsc::Receiver
 pub async fn block_consumer(mut stream: tokio::sync::mpsc::Receiver<near_indexer::StreamerMessage>) {
   while let Some(streamer_message) = stream.recv().await {
       eprintln!("{}", serde_json::to_value(streamer_message).unwrap());

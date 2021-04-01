@@ -5,6 +5,8 @@ mod producer;
 use producer::{ProducerType};
 
 #[actix::main]
+#[doc(hidden)]
+/// Where the magic happens 🌌
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Setup the indexer
     application::initialize()?;

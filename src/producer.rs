@@ -1,3 +1,7 @@
+//!
+//! Abstract away who's receiving data by publishing it to an array of known producers.
+//!
+
 use std::{sync::{Arc, Mutex}, time::Duration};
 
 use kafka::client::{KafkaClient, Compression, RequiredAcks};
