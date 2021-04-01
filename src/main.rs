@@ -5,16 +5,14 @@ use producer::{ProducerType};
 
 #[actix::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Setup general configration
+    // Setup the indexer
     initialize()?;
 
     // Setup the producer
-    let producer_type = get_producer_type()?;
+    let producer_type = producer::get_type()?;
     if producer_type != ProducerType::Kafka {
         log::error!("Only kafka is currently supported as a producer_type");
     }
-
-
 
     // Setup the indexer
     let indexer = create_near_indexer();
@@ -31,6 +29,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Initialize logging and load environment variables
 fn initialize() -> Result<(), Box<dyn std::error::Error>> { 
     dotenv::dotenv()?;
     logger::init(None);
@@ -38,6 +37,7 @@ fn initialize() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Create the NEAR indexer configuration
 fn configure_near_indexer(sync_mode: Option<near_indexer::SyncModeEnum>) -> near_indexer::IndexerConfig {
     near_indexer::IndexerConfig {
         home_dir: std::path::PathBuf::from(near_indexer::get_default_home()),
@@ -46,29 +46,20 @@ fn configure_near_indexer(sync_mode: Option<near_indexer::SyncModeEnum>) -> near
     }
 }
 
+/// Configure the NEAR indexer with default settings
 fn configure_near_indexer_default() -> near_indexer::IndexerConfig {
     configure_near_indexer(None)
 }
 
+/// Create the near indexer clients
 fn create_near_indexer() -> near_indexer::Indexer {
     let indexer_config = configure_near_indexer_default();
     near_indexer::Indexer::new(indexer_config)
 }
 
+// Handle the incoming blocks from the Receiver
 async fn block_consumer(mut stream: tokio::sync::mpsc::Receiver<near_indexer::StreamerMessage>) {
     while let Some(streamer_message) = stream.recv().await {
         eprintln!("{}", serde_json::to_value(streamer_message).unwrap());
-    }
-}
-
-fn get_producer_type() -> Result<ProducerType, Box<dyn std::error::Error>> {
-    let value = std::env::var("PRODUCER_TYPE")?;
-
-    match value.as_str() {
-        "kafka" => Ok(ProducerType::Kafka),
-        "rabbitmq" => Ok(ProducerType::RabbitMQ),
-        "redis" => Ok(ProducerType::Redis),
-        "grpc" => Ok(ProducerType::GRPC),
-        _ => Err("Invalid producer type must be either: kafka, rabbitmq, redis, grpc".into())
     }
 }

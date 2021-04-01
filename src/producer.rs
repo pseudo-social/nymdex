@@ -1,8 +1,23 @@
-use std::{sync::Arc, time::Duration};
+use std::{sync::{Arc, Mutex}, time::Duration};
 
 use kafka::client::{KafkaClient, Compression, RequiredAcks};
 use kafka::producer::{Record};
 
+/// Get the type of producer from the environment variables, fail if not supported
+pub fn get_type() -> Result<ProducerType, Box<dyn std::error::Error>> {
+  let value = std::env::var("PRODUCER_TYPE")?;
+
+  match value.as_str() {
+      "kafka" => Ok(ProducerType::Kafka),
+      // "rabbitmq" => Ok(ProducerType::RabbitMQ),
+      // "redis" => Ok(ProducerType::Redis),
+      // "grpc" => Ok(ProducerType::GRPC),
+      _ => Err("Invalid producer type must be either: kafka, rabbitmq, redis, grpc".into())
+  }
+}
+
+/// Describes the availabe producer types
+#[allow(dead_code)]
 #[derive(PartialEq)]
 pub enum ProducerType {
     Kafka,
@@ -11,12 +26,13 @@ pub enum ProducerType {
     Redis,
 }
 
-pub trait Producer<C, E> {
-    fn new(configuration: C) -> Self;
-    fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), E>;
+/// A trait to abstract generic producers
+pub trait Producer<T, C, E> {
+  fn new(client: T, configuration: C) -> Self;
+  fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), E>;
 }
 
-
+/// Kafka configuration
 #[derive(Debug, Clone)]
 pub struct KafkaConfig {
   client_id: String,
@@ -30,18 +46,18 @@ pub struct KafkaConfig {
   ack_timeout: Duration,
 }
 
+/// Kafka producer
 pub struct KafkaProducer {
   configuration: KafkaConfig,
-  client: Arc<KafkaClient>,
-  producer: Arc<kafka::producer::Producer>,
+  producer: Arc<Mutex<kafka::producer::Producer>>,
 }
 
-impl Producer<KafkaConfig, kafka::Error> for KafkaProducer {
-  fn new(configuration: KafkaConfig) -> Self {
-    let client = Arc::new(KafkaClient::new(configuration.brokers.clone()));
-    client.set_client_id(configuration.client_id);
+/// The implementation for a kafka producer
+impl<'a> Producer<KafkaClient, KafkaConfig, kafka::Error> for KafkaProducer {
+  fn new(mut client: KafkaClient, configuration: KafkaConfig) -> Self {
+    client.set_client_id(configuration.client_id.clone());
 
-    let producer = kafka::producer::Producer::from_client(client.clone())
+    let producer = kafka::producer::Producer::from_client(client)
       .with_ack_timeout(configuration.ack_timeout)
       .with_required_acks(configuration.required_acks)
       .with_compression(configuration.compression)
@@ -50,15 +66,14 @@ impl Producer<KafkaConfig, kafka::Error> for KafkaProducer {
       .expect("Failed to initialize the producer");
 
     Self {
-      configuration: configuration.clone(),
-      client,
-      producer: Arc::new(producer),
+      configuration,
+      producer: Arc::new(Mutex::new(producer)),
     }
   }
 
   fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), kafka::Error> {
     let json = serde_json::to_string(&message).unwrap();
-    let record = Record::from_value(&self.configuration.topic, json);
-    self.producer.send(&record)
+    let record = Record::from_value(self.configuration.topic.as_str(), json);
+    self.producer.lock().unwrap().send(&record)
   }
 }
