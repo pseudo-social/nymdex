@@ -3,5 +3,5 @@ DOCS_COMMAND=cargo doc --no-deps
 docs: target/doc/**/*
 	$(DOCS_COMMAND)
 
-serve-docs:
+docs-view:
 	$(DOCS_COMMAND) --open
