@@ -65,7 +65,7 @@ pub struct KafkaProducer {
 impl Producer<KafkaClient, KafkaConfig, kafka::Error> for KafkaProducer {
   fn new(mut client: KafkaClient, configuration: KafkaConfig) -> Self {
     client.set_client_id(configuration.client_id.clone());
-    client.load_metadata_all().expect("Failed to load metadata for the KafkaClient");
+    client.load_metadata_all().expect("Failed to connect/load metadata for the KafkaClient");
 
     let producer = kafka::producer::Producer::from_client(client)
       .with_ack_timeout(configuration.ack_timeout)
@@ -83,7 +83,8 @@ impl Producer<KafkaClient, KafkaConfig, kafka::Error> for KafkaProducer {
 
   fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), kafka::Error> {
     let json = serde_json::to_string(&message).unwrap();
-    let record = Record::from_value(self.configuration.topic.as_str(), json);
+    let record = Record::from_value(self.configuration.topic.as_str(), json.clone());
+    log::info!("Producing Kafka message: {}", json.clone());
     self.producer.lock().unwrap().send(&record)
   }
 
