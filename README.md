@@ -5,7 +5,7 @@ A generic tool for producing events into multiple supported queues and transport
 ## Get Up & Running
 
 * Clone the repository: `git clone git@github.com:pseudo-exchange/nymdex.git`
-  * For now you're NEAR configuration should be at `~/.near/config.json` this will be a configuration option later
+  * For now your NEAR configuration should be at `~/.near/config.json` this will be a configuration option later
 * Change directories into the repository: `cd nymdex`
 * Run the alpha producer setup: `cargo run`
 
