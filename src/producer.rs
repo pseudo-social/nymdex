@@ -62,6 +62,7 @@ pub struct KafkaProducer {
 impl Producer<KafkaClient, KafkaConfig, kafka::Error> for KafkaProducer {
   fn new(mut client: KafkaClient, configuration: KafkaConfig) -> Self {
     client.set_client_id(configuration.client_id.clone());
+    client.load_metadata_all().expect("Failed to load metadata for the KafkaClient");
 
     let producer = kafka::producer::Producer::from_client(client)
       .with_ack_timeout(configuration.ack_timeout)

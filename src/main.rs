@@ -22,13 +22,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Configure kafka
     let kafka_configuration = KafkaConfig {
         client_id: "nym-test-client".into(),
-        brokers: vec![],
+        brokers: vec!["localhost:9092".into()],
         topic: "blocks".into(),
         compression: Compression::NONE,
         required_acks: kafka::client::RequiredAcks::One,
         conn_idle_timeout: Duration::from_secs(15),
         ack_timeout: Duration::from_secs(5),
     };
+    log::info!("{:?}", kafka_configuration);
 
     // Build our kafkaesque nightmare!
     let kafka_client = KafkaClient::new(kafka_configuration.clone().brokers.clone());
@@ -39,7 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let block_stream = indexer.streamer();
     
     // Consume the incoming messages
-    actix::spawn(async move { kafka_producer.consume(block_stream).await; });
+    actix::spawn(async move { kafka_producer.consume(block_stream).await });
 
     // Wait til a SIG-INT
     tokio::signal::ctrl_c().await?;
