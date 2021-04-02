@@ -2,7 +2,7 @@
 //! Abstractions to keep the entrypoint KISS
 //!
 
-use crate::logger;
+use crate::{logger};
 
 /// Initialize logging and load environment variables
 pub fn initialize() -> Result<(), Box<dyn std::error::Error>> { 
@@ -35,11 +35,4 @@ pub fn configure_near_indexer_default() -> near_indexer::IndexerConfig {
 pub fn create_near_indexer() -> near_indexer::Indexer {
   let indexer_config = configure_near_indexer_default();
   near_indexer::Indexer::new(indexer_config)
-}
-
-/// Handle the incoming blocks from the tokio::sync::mpsc::Receiver
-pub async fn block_consumer(mut stream: tokio::sync::mpsc::Receiver<near_indexer::StreamerMessage>) {
-  while let Some(streamer_message) = stream.recv().await {
-      eprintln!("{}", serde_json::to_value(streamer_message).unwrap());
-  }
 }
