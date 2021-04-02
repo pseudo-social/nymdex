@@ -34,8 +34,11 @@ pub enum ProducerType {
 #[async_trait::async_trait]
 /// A trait to abstract generic producers
 pub trait Producer<T, C, E> {
+  /// Create an instance of a producer
   fn new(client: T, configuration: C) -> Self;
+  /// Produce a message
   fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), E>;
+  /// Consume data from a MPSC receiver and call produce
   async fn consume(&mut self, streamer: tokio::sync::mpsc::Receiver<near_indexer::StreamerMessage>);
 }
 

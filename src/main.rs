@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let kafka_configuration = KafkaConfig {
         client_id: "nym-test-client".into(),
         brokers: vec!["localhost:9092".into()],
-        topic: "blocks".into(),
+        topic: "blocks".into(), // TODO: This should be standardized! Bad bad bad!!!
         compression: Compression::NONE,
         required_acks: kafka::client::RequiredAcks::One,
         conn_idle_timeout: Duration::from_secs(15),
