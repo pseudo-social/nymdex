@@ -67,23 +67,31 @@ impl Producer for AMQPProducer {
     async fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), Self::Error> {
         // Build or AMQP queue entry
         let json = serde_json::to_string(&message).unwrap();
-        let _queue_name = get_producer_queue_name();
+        let queue_name = get_producer_queue_name();
 
         // Avoid processing the logs at all if level is not Info
         if log::log_enabled!(log::Level::Info) {
             log::info!("Producing AMQP message: {}", json.clone());
         }
 
-        // self.channel.lock().unwrap().basic_publish(
-        //     queue_name.as_str(),
-        //     self.configuration.queue_name.as_str(),
-        //     lapin::options::BasicPublishOptions::default(),
-        //     json.try_to_vec().unwrap(),
-        //     lapin::BasicProperties::default()
-        // ).await;
+        // Build message publish future
+        let published_message = self.channel.lock().unwrap().basic_publish(
+            queue_name.as_str(),
+            self.configuration.queue_name.as_str(),
+            lapin::options::BasicPublishOptions::default(),
+            json.as_bytes().clone().to_vec(),
+            lapin::BasicProperties::default()
+        );
 
-        // Produce to the queue!
-        Ok(())
+        // Await the stupidly complicated chain of futures... 😭
+        let confirmation = published_message.await?.await?;
+
+        // Confirm the result from the publish
+        match confirmation { 
+            lapin::publisher_confirm::Confirmation::NotRequested => Ok(()),
+            _ => Err("Failed to publish AMQP message".into()),
+        }
+
     }
 
     async fn consume(
