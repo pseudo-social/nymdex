@@ -80,18 +80,17 @@ impl Producer for AMQPProducer {
             self.configuration.queue_name.as_str(),
             lapin::options::BasicPublishOptions::default(),
             json.as_bytes().clone().to_vec(),
-            lapin::BasicProperties::default()
+            lapin::BasicProperties::default(),
         );
 
         // Await the stupidly complicated chain of futures... 😭
         let confirmation = published_message.await?.await?;
 
         // Confirm the result from the publish
-        match confirmation { 
+        match confirmation {
             lapin::publisher_confirm::Confirmation::NotRequested => Ok(()),
             _ => Err("Failed to publish AMQP message".into()),
         }
-
     }
 
     async fn consume(

@@ -2,7 +2,7 @@ mod application;
 mod logger;
 mod producer;
 
-use producer::{Producer, amqp::AMQPProducer, kafka::KafkaProducer};
+use producer::{amqp::AMQPProducer, kafka::KafkaProducer, Producer};
 
 #[actix::main]
 #[doc(hidden)]
@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut producer = AMQPProducer::new().await;
             actix::spawn(async move { producer.consume(block_stream).await });
         }
-        _ => log::error!("This should never happen, praise be to the aether.")
+        _ => log::error!("This should never happen, praise be to the aether."),
     }
 
     // Wait til a SIG-INT
