@@ -1,5 +1,5 @@
 //!
-//! Abstractions to keep the entrypoint KISS
+//! Abstractions to keep the entry point KISS
 //!
 
 use crate::logger;

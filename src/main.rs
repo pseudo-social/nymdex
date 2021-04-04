@@ -2,7 +2,7 @@ mod application;
 mod logger;
 mod producer;
 
-use producer::{kafka::KafkaProducer, Producer};
+use producer::{amqp::AMQPProducer, Producer};
 
 #[actix::main]
 #[doc(hidden)]
@@ -13,7 +13,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Setup the producer
     let producer_type = producer::get_type()?;
-    if producer_type != producer::Type::Kafka && producer_type != producer::Type::AMQP {
+    if !(producer_type == producer::Type::Kafka || producer_type == producer::Type::AMQP) {
         log::error!(
             "Only kafka & amqp are currently supported as a producer_type, more to come soon!"
         );
@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let block_stream = indexer.streamer();
 
     // Construct our producer
-    let mut producer = KafkaProducer::new().await;
+    let mut producer = AMQPProducer::new().await;
 
     // Consume the incoming messages
     actix::spawn(async move { producer.consume(block_stream).await });

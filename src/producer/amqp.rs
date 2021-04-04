@@ -2,6 +2,8 @@
 
 use std::sync::{Arc, Mutex};
 
+use tokio_amqp::*;
+
 use crate::producer::{get_producer_client_id, get_producer_url, Producer};
 
 use super::get_producer_queue_name;
@@ -15,7 +17,9 @@ pub struct Config {
 #[allow(dead_code)]
 /// AMQP producer
 pub struct AMQPProducer {
+    configuration: Config,
     connection: Arc<Mutex<lapin::Connection>>,
+    channel: Arc<Mutex<lapin::Channel>>,
 }
 
 /// The implementation for a AMQP producer
@@ -33,39 +37,50 @@ impl Producer for AMQPProducer {
         // Configure the AMQP connection
         let connection = lapin::Connection::connect(
             get_producer_url().as_str(),
-            lapin::ConnectionProperties::default(),
+            lapin::ConnectionProperties::default().with_tokio(),
         )
         .await
         .expect("Failed to connect to the AMQP client");
 
-        // Create the queue or log it's existence
-        let create_channel = connection.create_channel().await.unwrap().queue_declare(
-            configuration.queue_name.as_str(),
-            lapin::options::QueueDeclareOptions::default(),
-            lapin::types::FieldTable::default(),
-        );
+        // Create the AMQP channel
+        connection
+            .create_channel()
+            .await
+            .unwrap()
+            .queue_declare(
+                configuration.queue_name.as_str(),
+                lapin::options::QueueDeclareOptions::default(),
+                lapin::types::FieldTable::default(),
+            )
+            .await
+            .unwrap();
 
-        match create_channel.await {
-            Ok(_) => log::info!("Created queue with name \"{}\"", configuration.queue_name),
-            Err(_) => log::info!(
-                "Used already existing queue with name \"{}\"",
-                configuration.queue_name
-            ),
-        }
+        let channel = connection.create_channel().await.unwrap();
 
         Self {
+            configuration,
             connection: Arc::new(Mutex::new(connection)),
+            channel: Arc::new(Mutex::new(channel)),
         }
     }
 
-    fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), Self::Error> {
+    async fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), Self::Error> {
         // Build or AMQP queue entry
         let json = serde_json::to_string(&message).unwrap();
+        let _queue_name = get_producer_queue_name();
 
         // Avoid processing the logs at all if level is not Info
         if log::log_enabled!(log::Level::Info) {
             log::info!("Producing AMQP message: {}", json.clone());
         }
+
+        // self.channel.lock().unwrap().basic_publish(
+        //     queue_name.as_str(),
+        //     self.configuration.queue_name.as_str(),
+        //     lapin::options::BasicPublishOptions::default(),
+        //     json.try_to_vec().unwrap(),
+        //     lapin::BasicProperties::default()
+        // ).await;
 
         // Produce to the queue!
         Ok(())
@@ -77,6 +92,7 @@ impl Producer for AMQPProducer {
     ) {
         while let Some(message) = streamer.recv().await {
             self.produce(message)
+                .await
                 .expect("Failed to produce AMQP message");
         }
     }

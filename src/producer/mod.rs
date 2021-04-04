@@ -11,8 +11,8 @@ pub fn get_type() -> Result<Type, Box<dyn std::error::Error>> {
 
     match value.as_str() {
         "kafka" => Ok(Type::Kafka),
+        "amqp" => Ok(Type::AMQP),
         // TODO: Implement me!
-        // "amqp" => Ok(Type::AMQP),
         // "redis" => Ok(Type::Redis),
         // "grpc" => Ok(Type::GRPC),
         _ => Err("Invalid producer type must be either: kafka, amqp, redis, grpc".into()),
@@ -61,7 +61,7 @@ pub trait Producer {
     /// Create an instance of a producer
     async fn new() -> Self;
     /// Produce a message
-    fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), Self::Error>;
+    async fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), Self::Error>;
     /// Consume data from a MPSC receiver and call produce
     async fn consume(
         &mut self,

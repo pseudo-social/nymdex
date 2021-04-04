@@ -69,7 +69,7 @@ impl Producer for KafkaProducer {
         }
     }
 
-    fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), Self::Error> {
+    async fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), Self::Error> {
         // Build our kafka record to produce
         let json = serde_json::to_string(&message).unwrap();
         let topic = get_producer_queue_name();
@@ -90,6 +90,7 @@ impl Producer for KafkaProducer {
     ) {
         while let Some(message) = streamer.recv().await {
             self.produce(message)
+                .await
                 .expect("Failed to produce Kafka message");
         }
     }
