@@ -67,7 +67,7 @@ impl Producer for AMQPProducer {
     async fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), Self::Error> {
         // Build or AMQP queue entry
         let json = serde_json::to_string(&message).unwrap();
-        let queue_name = get_producer_queue_name();
+        let exchange_name = get_producer_client_id();
 
         // Avoid processing the logs at all if level is not Info
         if log::log_enabled!(log::Level::Info) {
@@ -76,7 +76,7 @@ impl Producer for AMQPProducer {
 
         // Build message publish future
         let published_message = self.channel.lock().unwrap().basic_publish(
-            queue_name.as_str(),
+            exchange_name.as_str(),
             self.configuration.queue_name.as_str(),
             lapin::options::BasicPublishOptions::default(),
             json.as_bytes().clone().to_vec(),
