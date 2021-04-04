@@ -13,7 +13,7 @@ This project has become more a utility to source data into many different transp
 ---
 
 
-# Devleopment
+# Development
 
 
 ## Get Up & Running
