@@ -2,7 +2,7 @@ mod application;
 mod logger;
 mod producer;
 
-use producer::{amqp::AMQPProducer, Producer};
+use producer::{Producer, amqp::AMQPProducer, kafka::KafkaProducer};
 
 #[actix::main]
 #[doc(hidden)]
@@ -23,11 +23,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let indexer = application::create_near_indexer();
     let block_stream = indexer.streamer();
 
-    // Construct our producer
-    let mut producer = AMQPProducer::new().await;
-
-    // Consume the incoming messages
-    actix::spawn(async move { producer.consume(block_stream).await });
+    // Spawn consumers based on specified type
+    match producer_type {
+        producer::Type::Kafka => {
+            let mut producer = KafkaProducer::new().await;
+            actix::spawn(async move { producer.consume(block_stream).await });
+        }
+        producer::Type::AMQP => {
+            let mut producer = AMQPProducer::new().await;
+            actix::spawn(async move { producer.consume(block_stream).await });
+        }
+        _ => log::error!("This should never happen, praise be to aether.")
+    }
 
     // Wait til a SIG-INT
     tokio::signal::ctrl_c().await?;
