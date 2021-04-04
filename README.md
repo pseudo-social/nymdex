@@ -1,6 +1,20 @@
 # nymdex
 
-A generic tool for producing events into multiple supported queues and transports from NEAR Protocol
+A language agnostic `neard` real time/historical data source, it can currently produce to Kafka and AMQP clients (such as RabbitMQ).
+
+---
+
+## Rename
+
+This project has become more a utility to source data into many different transport layers, mostly queue and topic based. What should we call it?
+
+**Any ideas?!**
+
+---
+
+
+# Devleopment
+
 
 ## Get Up & Running
 
