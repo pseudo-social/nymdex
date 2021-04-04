@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut producer = AMQPProducer::new().await;
             actix::spawn(async move { producer.consume(block_stream).await });
         }
-        _ => log::error!("This should never happen, praise be to aether.")
+        _ => log::error!("This should never happen, praise be to the aether.")
     }
 
     // Wait til a SIG-INT
