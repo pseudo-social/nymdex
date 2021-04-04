@@ -36,7 +36,7 @@ pub fn get_producer_queue_name() -> String {
 
 /// Get the producer url from either the environment
 pub fn get_producer_url() -> String {
-    std::env::var("PRODUCER_QUEUE_NAME")
+    std::env::var("PRODUCER_URL")
         .expect("PRODUCER_URL must be set, how else could you connect?")
         .into()
 }
@@ -53,11 +53,14 @@ pub enum Type {
 
 #[async_trait::async_trait]
 /// A trait to abstract generic producers
-pub trait Producer<E> {
+pub trait Producer {
+    /// Error type
+    type Error;
+
     /// Create an instance of a producer
     fn new() -> Self;
     /// Produce a message
-    fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), E>;
+    fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), Self::Error>;
     /// Consume data from a MPSC receiver and call produce
     async fn consume(
         &mut self,

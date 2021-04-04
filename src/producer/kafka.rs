@@ -30,7 +30,9 @@ pub struct KafkaProducer {
 
 /// The implementation for a kafka producer
 #[async_trait::async_trait]
-impl Producer<kafka::Error> for KafkaProducer {
+impl Producer for KafkaProducer {
+    type Error = kafka::Error;
+
     fn new() -> Self {
         // Configure kafka
         let configuration = Config {
@@ -67,7 +69,7 @@ impl Producer<kafka::Error> for KafkaProducer {
         }
     }
 
-    fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), kafka::Error> {
+    fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), Self::Error> {
         // Build our kafka record to produce
         let json = serde_json::to_string(&message).unwrap();
         let topic = get_producer_queue_name();

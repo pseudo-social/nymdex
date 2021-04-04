@@ -4,8 +4,6 @@ version = "0.0.1"
 authors = ["Zack Kollar <rallokkcaz@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 near-indexer = { git = "https://github.com/nearprotocol/nearcore" }
 actix = "0.11.0-beta.2"
@@ -20,3 +18,7 @@ env_logger = "0.8.3"
 actix-rt = "2.2.0"
 kafka = "0.8.0"
 async-trait = "0.1.48"
+
+[package.metadata.precommit]
+fmt = "cargo fmt -- --write-mode diff 2>&1"
+test = "cargo test 2>&1"
