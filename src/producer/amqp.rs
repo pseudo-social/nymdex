@@ -59,8 +59,15 @@ impl Producer for AMQPProducer {
     }
 
     fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), Self::Error> {
-        let _json = serde_json::to_string(&message).unwrap();
+        // Build or AMQP queue entry
+        let json = serde_json::to_string(&message).unwrap();
 
+        // Avoid processing the logs at all if level is not Info
+        if log::log_enabled!(log::Level::Info) {
+            log::info!("Producing AMQP message: {}", json.clone());
+        }
+
+        // Produce to the queue!
         Ok(())
     }
 
