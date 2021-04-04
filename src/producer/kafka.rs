@@ -33,7 +33,7 @@ pub struct KafkaProducer {
 impl Producer for KafkaProducer {
     type Error = kafka::Error;
 
-    fn new() -> Self {
+    async fn new() -> Self {
         // Configure kafka
         let configuration = Config {
             client_id: get_producer_client_id().into(),

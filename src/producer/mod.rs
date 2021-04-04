@@ -2,6 +2,7 @@
 //! Helpers and the generic `Producer` trait
 //!
 
+pub mod amqp;
 pub mod kafka;
 
 /// Get the type of producer from the environment variables, fail if not supported or invalid
@@ -11,10 +12,10 @@ pub fn get_type() -> Result<Type, Box<dyn std::error::Error>> {
     match value.as_str() {
         "kafka" => Ok(Type::Kafka),
         // TODO: Implement me!
-        // "rabbitmq" => Ok(Type::RabbitMQ),
+        // "amqp" => Ok(Type::AMQP),
         // "redis" => Ok(Type::Redis),
         // "grpc" => Ok(Type::GRPC),
-        _ => Err("Invalid producer type must be either: kafka, rabbitmq, redis, grpc".into()),
+        _ => Err("Invalid producer type must be either: kafka, amqp, redis, grpc".into()),
     }
 }
 
@@ -46,7 +47,7 @@ pub fn get_producer_url() -> String {
 #[allow(dead_code)]
 pub enum Type {
     Kafka,
-    RabbitMQ,
+    AMQP,
     GRPC,
     Redis,
 }
@@ -58,7 +59,7 @@ pub trait Producer {
     type Error;
 
     /// Create an instance of a producer
-    fn new() -> Self;
+    async fn new() -> Self;
     /// Produce a message
     fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), Self::Error>;
     /// Consume data from a MPSC receiver and call produce
