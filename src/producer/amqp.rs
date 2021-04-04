@@ -40,13 +40,13 @@ impl Producer for AMQPProducer {
             lapin::ConnectionProperties::default().with_tokio(),
         )
         .await
-        .expect("Failed to connect to the AMQP client");
+        .expect("Failed to connect to the AMQP server");
 
-        // Create the AMQP channel
-        connection
-            .create_channel()
-            .await
-            .unwrap()
+        // Create the channel
+        let channel = connection.create_channel().await.unwrap();
+
+        // Create the queue if it doesn't exist
+        let queue = channel
             .queue_declare(
                 configuration.queue_name.as_str(),
                 lapin::options::QueueDeclareOptions::default(),
@@ -55,7 +55,7 @@ impl Producer for AMQPProducer {
             .await
             .unwrap();
 
-        let channel = connection.create_channel().await.unwrap();
+        log::info!("Using AMQP queue: {:?}", &queue);
 
         Self {
             configuration,
@@ -67,7 +67,7 @@ impl Producer for AMQPProducer {
     async fn produce(&self, message: near_indexer::StreamerMessage) -> Result<(), Self::Error> {
         // Build or AMQP queue entry
         let json = serde_json::to_string(&message).unwrap();
-        let exchange_name = get_producer_client_id();
+        let _exchange_name = get_producer_client_id();
 
         // Avoid processing the logs at all if level is not Info
         if log::log_enabled!(log::Level::Info) {
@@ -76,7 +76,7 @@ impl Producer for AMQPProducer {
 
         // Build message publish future
         let published_message = self.channel.lock().unwrap().basic_publish(
-            exchange_name.as_str(),
+            "", // TODO: Keep this empty for now, still too much of an AMQP n00b
             self.configuration.queue_name.as_str(),
             lapin::options::BasicPublishOptions::default(),
             json.as_bytes().clone().to_vec(),

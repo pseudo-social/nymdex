@@ -53,7 +53,7 @@ impl Producer for KafkaProducer {
         // IMPORTANT: This actually creates the connection the kafka broker.
         client
             .load_metadata_all()
-            .expect("Failed to connect/load metadata for the KafkaClient");
+            .expect("Failed to connect to the Kafka server");
 
         // Build our producer from the client we've already created
         let producer = kafka::producer::Producer::from_client(client)
