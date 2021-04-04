@@ -3,7 +3,7 @@ mod application;
 mod producer;
 
 use kafka::client::{Compression, KafkaClient};
-use producer::{KafkaConfig, KafkaProducer, Producer, ProducerType};
+use producer::{KafkaConfig, KafkaProducer, Producer};
 use std::{time::Duration};
 
 #[actix::main]
@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Setup the producer
     let producer_type = producer::get_type()?;
-    if producer_type != ProducerType::Kafka {
+    if producer_type != producer::Type::Kafka {
         log::error!("Only kafka is currently supported as a producer_type");
     }
 
@@ -23,7 +23,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let kafka_configuration = KafkaConfig {
         client_id: "nym-test-client".into(),
         brokers: vec!["localhost:9092".into()],
-        topic: "blocks".into(), // TODO: This should be standardized! Bad bad bad!!!
         compression: Compression::NONE,
         required_acks: kafka::client::RequiredAcks::One,
         conn_idle_timeout: Duration::from_secs(15),
