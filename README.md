@@ -19,8 +19,9 @@ This project has become more a utility to source data into many different transp
 ## Get Up & Running
 
 * Clone the repository: `git clone git@github.com:pseudo-exchange/nymdex.git`
-  * For now your NEAR configuration should be at `~/.near/config.json` this will be a configuration option later
+  * For now your NEAR configuration should be at `~/.near/config.json` or can be set with the `NEAR_CONFIG_PATH` environment variable.
 * Change directories into the repository: `cd nymdex`
+* Create a `.env` file, you must specify a `PRODUCER_TYPE` and `PRODUCER_URL`, see `.env.example`
 * Run the alpha producer setup: `cargo run`
 
 ## Documentation
