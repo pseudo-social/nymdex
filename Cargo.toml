@@ -22,6 +22,7 @@ tokio-amqp = "1.0.0"
 lapin = "1.6.8"
 shellexpand = "2.1.0"
 
-[package.metadata.precommit]
-fmt = "cargo fmt -- --write-mode diff 2>&1"
-test = "cargo test 2>&1"
+[dev-dependencies.cargo-husky]
+cargo-husky = "1"
+default-features = false # Disable features which are enabled by default
+features = ["precommit-hook", "run-cargo-test", "run-cargo-fmt"]

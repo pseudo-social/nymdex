@@ -4,7 +4,7 @@
 
 use crate::logger;
 
- /// Initialize logging and load environment variables
+/// Initialize logging and load environment variables
 pub fn initialize() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv()?;
     logger::init(None);
