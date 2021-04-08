@@ -21,6 +21,8 @@ pub fn configure_near_indexer(
         Err(_) => near_indexer::get_default_home(),
     };
 
+    log::info!("Loading NEAR config from: {}", near_config_path);
+
     near_indexer::IndexerConfig {
         home_dir: std::path::PathBuf::from(near_config_path),
         sync_mode: sync_mode.unwrap_or(near_indexer::SyncModeEnum::FromInterruption),
