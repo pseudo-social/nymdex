@@ -3074,7 +3074,7 @@ dependencies = [
 
 [[package]]
 name = "nymdex"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "actix",
  "actix-rt",

@@ -1,6 +1,6 @@
 [package]
 name = "nymdex"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Zack Kollar <rallokkcaz@gmail.com>"]
 edition = "2018"
 
