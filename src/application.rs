@@ -4,7 +4,7 @@
 
 use crate::logger;
 
-/// Initialize logging and load environment variables
+ /// Initialize logging and load environment variables
 pub fn initialize() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv()?;
     logger::init(None);
@@ -17,7 +17,7 @@ pub fn configure_near_indexer(
     sync_mode: Option<near_indexer::SyncModeEnum>,
 ) -> near_indexer::IndexerConfig {
     let near_config_path = match std::env::var("NEAR_CONFIG_PATH") {
-        Ok(path) => path,
+        Ok(path) => shellexpand::tilde(&path).into(),
         Err(_) => near_indexer::get_default_home(),
     };
 
